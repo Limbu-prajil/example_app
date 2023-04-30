@@ -1,14 +1,12 @@
 const express = require('express')
 const path = require('path')
-const boyParser = require('body-parser')
+const bodyParser = require('body-parser')
 
-const PORT = process.env.PORT || 5000
-const MAX_NOTES = 100;
-const PATH_PREFIX = '/exampleapp';
+const PORT = process.env.PORT || 3000
+const MAX_NOTES = 6;
 
 const app = express()
-
-app.use(boyParser())
+app.use(bodyParser())
 
 const notes = [
   {
@@ -31,7 +29,6 @@ const isValidNote = note => {
 
 const createNote = note => {
   notes.push(note);
-
   if (notes.length > MAX_NOTES) {
     notes.shift()
   }
@@ -44,33 +41,12 @@ const formatNote = note => {
   }
 }
 
-const notes_page = `
-<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" type="text/css" href="${PATH_PREFIX}/main.css" />
-  <script type="text/javascript" src="${PATH_PREFIX}/main.js"></script>
-</head>
-<body>
-  <div class='container'>
-    <h1>Notes</h1>
-    <div id='notes'>
-    </div>
-    <form action='${PATH_PREFIX}/new_note' method='POST'>
-      <input type="text" name="note"><br>
-      <input type="submit" value="Save">
-    </form>
-  </div>
-</body>
-</html>
-`
-
 const notes_spa = `
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="${PATH_PREFIX}/main.css" />
-  <script type="text/javascript" src="${PATH_PREFIX}/spa.js"></script>
+  <link rel="stylesheet" type="text/css" href="/main.css" />
+  <script type="text/javascript" src="/spa.js"></script>
 </head>
 <body>
   <div class='container'>
@@ -86,7 +62,7 @@ const notes_spa = `
 </html>
 `
 
-const getFronPageHtml = (noteCount) => {
+const getFrontPageHtml = (noteCount) => {
   return(`
 <!DOCTYPE html>
     <html>
@@ -96,30 +72,26 @@ const getFronPageHtml = (noteCount) => {
         <div class='container'>
           <h1>Full stack example app</h1>
           <p>number of notes created ${noteCount}</p>
-          <a href='${PATH_PREFIX}/notes'>notes</a>
+          <a href='/spa'>notes</a>
           <img src='kuva.png' width='200' />
         </div>
       </body>
     </html>
 `)
-} 
+}
 
 const router = express.Router();
 
 router.use(express.static(path.join(__dirname, 'public')))
 
 router.get('/', (req, res) => {
-  const page = getFronPageHtml(notes.length)
+  const page = getFrontPageHtml(notes.length)
   res.send(page)
 })
 
 router.get('/reset', (req, res) => {
   notes.splice(0, notes.length)
-  res.status(201).send({ message: 'notes reset' })
-})
-
-router.get('/notes', (req, res) => {
-  res.send(notes_page)
+  res.status(201).send({ message: 'Notes reset!!!!' })
 })
 
 router.get('/spa', (req, res) => {
@@ -134,27 +106,14 @@ router.post('/new_note_spa', (req, res) => {
   if (!isValidNote(req.body)) {
     return res.send('invalid note').status(400)
   }
-
   createNote(formatNote(req.body))
-
-  res.status(201).send({ message: 'note created' })
-})
-
-router.post('/new_note', (req, res) => {
-  if (typeof req.body.note === 'string') {
-    createNote(formatNote({
-      content: req.body.note,
-      date: new Date()
-    }))
-  }
-  
-  res.redirect(`${PATH_PREFIX}/notes`)
+  res.status(201).send({ message: 'A note created!' })
 })
 
 if (process.env.NODE_ENV === 'development') {
-  app.use(PATH_PREFIX, router)
-} else {
   app.use('/', router)
+} else {
+console.log('Change your NODE_ENV')
 }
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`))
